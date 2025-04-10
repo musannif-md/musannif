@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/masroof-maindak/musannif/internal/db"
+	"github.com/masroof-maindak/musannif/internal/logger"
 	"github.com/masroof-maindak/musannif/internal/utils"
 )
 
@@ -40,6 +41,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := utils.GenerateToken(req.Username)
 	if err != nil {
+		logger.Log.Err(err).Msg("Failed to generate token")
 		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 		return
 	}
@@ -53,7 +55,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
-
 
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 

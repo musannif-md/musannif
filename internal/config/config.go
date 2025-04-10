@@ -16,7 +16,7 @@ type AppConfig struct {
 		Name            string `mapstructure:"name"`
 		SqliteDirectory string `mapstructure:"sqlite_directory"`
 		LogDirectory    string `mapstructure:"log_directory"`
-		Environment     string `mapstructure:"environment"`
+		Environment     string `mapstructure:"environment"` // "debug" or "prod"
 	} `mapstructure:"app"`
 	Server struct {
 		Host string `mapstructure:"host"`
@@ -49,4 +49,3 @@ func Initialize() error {
 
 	return nil
 }
-
