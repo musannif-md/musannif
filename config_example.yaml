@@ -1,7 +1,8 @@
 app:
   name: "musannif"
   sqlite_directory: "/var/db/musannif/"
-  log_directory: "/var/logs/musannif/"
+  log_directory: "/var/log/musannif/"
+  note_directory: "/var/opt/musannif/"
   environment: "dev"
 server:
   host: "localhost"

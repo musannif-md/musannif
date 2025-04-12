@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const dbname string = "experiments.db"
+const dbname string = "musannif.db"
 
 var db *sql.DB
 
@@ -91,6 +91,15 @@ func InitDb(dir string) error {
 	return nil
 }
 
+func CleanupDb() error {
+	if db != nil {
+		if err := db.Close(); err != nil {
+			return fmt.Errorf("failed to close database: %w", err)
+		}
+	}
+	return nil
+}
+
 func LoginUser(username, password string) (string, error) {
 	var (
 		hashedPassword string
@@ -132,14 +141,5 @@ func SignupUser(username, password, role string) error {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return nil
-}
-
-func CleanupDb() error {
-	if db != nil {
-		if err := db.Close(); err != nil {
-			return fmt.Errorf("failed to close database: %w", err)
-		}
-	}
 	return nil
 }

@@ -16,6 +16,7 @@ type AppConfig struct {
 		Name            string `mapstructure:"name"`
 		SqliteDirectory string `mapstructure:"sqlite_directory"`
 		LogDirectory    string `mapstructure:"log_directory"`
+		NoteDirectory    string `mapstructure:"note_directory"`
 		Environment     string `mapstructure:"environment"` // "debug" or "prod"
 	} `mapstructure:"app"`
 	Server struct {

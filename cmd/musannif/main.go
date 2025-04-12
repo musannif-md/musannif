@@ -101,14 +101,14 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func newServer(config *config.AppConfig) http.Handler {
+func newServer(cfg *config.AppConfig) http.Handler {
 	mux := http.NewServeMux()
 
-	routes.AddRoutes(mux)
+	routes.AddRoutes(mux, cfg)
 
 	var handler http.Handler = middlewares.CORS(mux)
 
-	if config.App.Environment == "debug" {
+	if cfg.App.Environment == "debug" {
 		handler = httplog.Logger(handler)
 	}
 
