@@ -2,10 +2,13 @@ name: basic build & test
 
 on:
   push:
-    branches: [ "*" ]
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
   pull_request:
-    branches: [ "*" ]
-
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
 jobs:
 
   build:
@@ -19,7 +22,7 @@ jobs:
         go-version: '1.24.2'
 
     - name: Build
-      run: go build -o bin/musannif cmd/musannif/main.go
+      run: make build
 
     - name: Test
       run: go test -v ./...
