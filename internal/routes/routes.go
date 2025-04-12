@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	"github.com/masroof-maindak/musannif/internal/handlers"
-	_ "github.com/masroof-maindak/musannif/internal/middlewares"
+	"github.com/musannif-md/musannif/internal/handlers"
+	_ "github.com/musannif-md/musannif/internal/middlewares"
 )
 
 func AddRoutes(mux *http.ServeMux) {
@@ -15,4 +15,3 @@ func AddRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /login", handlers.LoginHandler)
 	mux.HandleFunc("POST /signup", handlers.SignupHandler)
 }
-

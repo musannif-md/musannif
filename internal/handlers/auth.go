@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/masroof-maindak/musannif/internal/db"
-	"github.com/masroof-maindak/musannif/internal/logger"
-	"github.com/masroof-maindak/musannif/internal/utils"
+	"github.com/musannif-md/musannif/internal/db"
+	"github.com/musannif-md/musannif/internal/logger"
+	"github.com/musannif-md/musannif/internal/utils"
 )
 
 type LoginRequest struct {

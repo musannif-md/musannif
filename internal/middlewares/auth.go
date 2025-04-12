@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/masroof-maindak/musannif/internal/utils"
+	"github.com/musannif-md/musannif/internal/utils"
 )
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -30,4 +30,3 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		next.ServeHTTP(w, r)
 	}
 }
-

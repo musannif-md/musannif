@@ -1,4 +1,4 @@
-module github.com/masroof-maindak/musannif
+module github.com/musannif-md/musannif
 
 go 1.24.2
 

@@ -13,12 +13,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/masroof-maindak/musannif/internal/config"
-	"github.com/masroof-maindak/musannif/internal/db"
-	"github.com/masroof-maindak/musannif/internal/logger"
-	"github.com/masroof-maindak/musannif/internal/middlewares"
-	"github.com/masroof-maindak/musannif/internal/routes"
-	"github.com/masroof-maindak/musannif/internal/utils"
+	"github.com/musannif-md/musannif/internal/config"
+	"github.com/musannif-md/musannif/internal/db"
+	"github.com/musannif-md/musannif/internal/logger"
+	"github.com/musannif-md/musannif/internal/middlewares"
+	"github.com/musannif-md/musannif/internal/routes"
+	"github.com/musannif-md/musannif/internal/utils"
 
 	"github.com/MadAppGang/httplog"
 )

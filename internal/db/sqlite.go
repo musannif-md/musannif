@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/masroof-maindak/musannif/internal/db/queries"
+	"github.com/musannif-md/musannif/internal/db/queries"
 
-	"golang.org/x/crypto/bcrypt"
 	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const dbname string = "experiments.db"
