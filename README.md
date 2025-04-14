@@ -4,7 +4,9 @@ Server for Musannif, A sophisticated collaborative Markdown editor designed for 
 
 ## Architecture
 
-### [WIP] System Diagram
+### High-Level Diagram
+
+![system-architecture-diagram](.github/assets/system-architecture.drawio.png)
 
 ### Core Ideas
 
@@ -14,12 +16,15 @@ Server for Musannif, A sophisticated collaborative Markdown editor designed for 
 
 ## Installing
 
+- 
+
 ### Locally
 
 ```bash
 git clone https://github.com/musannif-md/musannif.git
+cd musannif
 cp config_example.yaml config.yaml # and modify the new file accordingly
-make build
+make
 ```
 
 ## TODO
