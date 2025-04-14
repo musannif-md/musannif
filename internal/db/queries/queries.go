@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS Notes (
     note_id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    created_at INTEGER DEFAULT unixepoch(),
-    last_modified INTEGER DEFAULT unixepoch(),
+    created_at INTEGER DEFAULT (unixepoch()),
+    last_modified INTEGER DEFAULT (unixepoch()),
 	-- deleted BOOLEAN NOT NULL, -- TODO: For 'recently deleted' feature
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
