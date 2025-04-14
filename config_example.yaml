@@ -3,7 +3,7 @@ app:
   sqlite_directory: "/var/db/musannif/"
   log_directory: "/var/log/musannif/"
   note_directory: "/var/opt/musannif/"
-  environment: "dev"
+  environment: "debug"
 server:
   host: "localhost"
   port: 8242
