@@ -5,41 +5,88 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 
 	"github.com/musannif-md/musannif/internal/config"
+	"github.com/musannif-md/musannif/internal/db"
 	"github.com/musannif-md/musannif/internal/logger"
 )
 
 type noteCreateReq struct {
 	Username string `json:"username"`
-	NoteName string `json:"name"`
-	// optional content too...
+	NoteName string `json:"note_name"`
+	Content  string `json:"content"`
+}
+
+type noteCreationResp struct {
+	NoteId string `json:"note_id"`
+}
+
+type noteContent struct {
+	NoteData string `json:"note_data"`
+}
+
+type noteListReq struct {
+	Username string `json:"username"`
+}
+
+type noteListResp struct {
+	Username string `json:"username"`
 }
 
 func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req noteCreateReq
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// TODO: check if a note w/ the same name exists already first
+		// Make directories
+		notesDirPath := path.Join(cfg.App.NoteDirectory, req.Username, "/")
+		err = os.MkdirAll(notesDirPath, os.ModePerm)
+		if err != nil {
+			http.Error(w, "error initializing note directory: %v\n", http.StatusInternalServerError)
+			logger.Log.Error().Err(err).Msg("error initializing note directory: %v\n")
+			return
+		}
 
 		// Create file
-		path := path.Join(cfg.App.NoteDirectory, req.Username, "/", req.NoteName)
-		_, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 666)
+		path := path.Join(notesDirPath, req.NoteName)
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 666)
 		if err != nil {
 			http.Error(w, "failed to create note file", http.StatusInternalServerError)
 			logger.Log.Error().Err(err).Msg("failed to create note file")
 			return
 		}
 
-		// TODO: optionally copy over content, if provided
+		// Write contents
+		if req.Content != "" {
+			_, err = f.WriteString(req.Content)
+			if err != nil {
+				http.Error(w, "failed to copy over contents", http.StatusInternalServerError)
+				logger.Log.Error().Err(err).Msg("failed to copy over contents")
+				return
+			}
+		}
 
-		// TODO: insert external blob/file pointer in DB
+		// Insert file info in DB
+		// CHECK: do we need to check if a note w/ the same name exists in the DB already?
+		id, err := db.CreateNote(req.Username, req.NoteName)
+		if err != nil {
+			http.Error(w, "failed to create note in DB", http.StatusInternalServerError)
+			logger.Log.Error().Err(err).Msg("failed to create note in DB")
+			return
+		}
 
-		w.WriteHeader(http.StatusOK)
+		// Construct and send response
+		data := noteCreationResp{
+			NoteId: strconv.FormatInt(id, 10),
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(data)
 	}
 }
 
@@ -51,21 +98,78 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 			return
 		}
 
+		/*
+			CHECK: how could we ensure consistency b/w the filesystem and DB?
+
+			One horrible idea is to spin up two threads with a conditional variable in
+			the database's function to rollback if the filesystem delete fails
+		*/
+
+		// Delete database entry
+		err := db.DeleteNote(req.Username, req.NoteName)
+		if err != nil {
+			http.Error(w, "failed to delete note from DB", http.StatusInternalServerError)
+			logger.Log.Error().Err(err).Msg("failed to delete note from DB")
+			return
+		}
+
 		// Delete file
 		path := path.Join(cfg.App.NoteDirectory, req.Username, "/", req.NoteName)
-		err := os.Remove(path)
+		err = os.Remove(path)
 		if err != nil {
 			http.Error(w, "failed to delete note file", http.StatusInternalServerError)
 			logger.Log.Error().Err(err).Msg("failed to delete note file")
 			return
 		}
 
-		// TODO: remove entry from DB
-
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-// CHECK: websocket...?
-func FetchNote(w http.ResponseWriter, r *http.Request) {
+func FetchNoteData(cfg *config.AppConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req noteCreateReq
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		path := path.Join(cfg.App.NoteDirectory, req.Username, "/", req.NoteName)
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			http.Error(w, "failed to read note", http.StatusInternalServerError)
+			logger.Log.Error().Err(err).Msg("failed to read note")
+			return
+		}
+
+		data := noteContent{
+			NoteData: string(content),
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(data)
+	}
 }
+
+func FetchNoteList(cfg *config.AppConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req noteListReq
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		noteListMd, err := db.GetUserNoteMetadata(req.Username)
+		if err != nil {
+			http.Error(w, "failed to get metadata of user's notes", http.StatusInternalServerError)
+			logger.Log.Error().Err(err).Msg("failed to get metadata of user's notes")
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(noteListMd)
+	}
+}
+
+// CHECK: websocket w/ pubsub for multiple clients?

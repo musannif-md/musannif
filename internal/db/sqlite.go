@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"strconv"
 
 	"github.com/musannif-md/musannif/internal/db/queries"
+	"github.com/musannif-md/musannif/internal/utils"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -97,6 +99,7 @@ func CleanupDb() error {
 			return fmt.Errorf("failed to close database: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -142,4 +145,68 @@ func SignupUser(username, password, role string) error {
 	}
 
 	return nil
+}
+
+func CreateNote(username, notename string) (int64, error) {
+	result, err := db.Exec(queries.InsertNoteQuery, username, notename)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create note: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("error getting last inserted id: %w", err)
+	}
+
+	return id, nil
+}
+
+func DeleteNote(username, notename string) error {
+	_, err := db.Exec(queries.DeleteNoteQuery, username, notename)
+	if err != nil {
+		return fmt.Errorf("failed to delete note: %w", err)
+	}
+
+	return nil
+}
+
+func GetUserNoteMetadata(username string) ([]utils.NoteMetadata, error) {
+	rows, err := db.Query(queries.GetUsersNotesMetadata, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata for user's notes: %w", err)
+	}
+	defer rows.Close()
+
+	var noteListMd []utils.NoteMetadata
+
+	for rows.Next() {
+		var noteId int64
+		var notename string
+		var createdAt int64
+		var lastModified int64
+
+		err = rows.Scan(&noteId, &notename, &createdAt, &lastModified)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan row to NoteMetadata obj: %w", err)
+		}
+
+		// We're doing this to send strings over JSON as opposed to integers
+		// Since JavaScript doesn't natively support 64-bit wide integers...
+
+		md := utils.NoteMetadata{
+			Id:           strconv.FormatInt(noteId, 10),
+			Name:         notename,
+			CreatedAt:    strconv.FormatInt(createdAt, 10),
+			LastModified: strconv.FormatInt(lastModified, 10),
+		}
+
+		noteListMd = append(noteListMd, md)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run query: %w", err)
+	}
+
+	return noteListMd, nil
 }
