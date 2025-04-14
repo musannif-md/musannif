@@ -1,0 +1,33 @@
+name: Build and Release Go Binary
+
+on:
+  push:
+    tags:
+      - '20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.2'
+
+      - name: Build binary
+        run: make build
+
+      - name: Upload release asset
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+          file: ./bin/
+          asset_name: musannif
+          overwrite: true
