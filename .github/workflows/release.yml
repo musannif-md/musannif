@@ -28,6 +28,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
-          file: ./bin/
-          asset_name: musannif
+          file: ./bin/musannif
+          asset_name: musannif-linux-amd64
           overwrite: true
