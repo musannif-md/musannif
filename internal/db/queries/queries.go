@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS Notes (
     last_modified INTEGER DEFAULT (unixepoch()),
 	-- deleted BOOLEAN NOT NULL, -- TODO: For 'recently deleted' feature
     FOREIGN KEY (user_id) REFERENCES Users(id)
+	UNIQUE (user_id, name)
 );
 
 CREATE INDEX IF NOT EXISTS idx_notes_user_id ON Notes (user_id);

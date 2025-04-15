@@ -55,8 +55,6 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 		req.NoteName += ".md"
 		path := path.Join(notesDirPath, req.NoteName)
 
-		// Ensure file doesn't exist already
-
 		// Create file
 		// FIXME: why don't created files have 644?
 		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
@@ -77,7 +75,6 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		// Insert file info in DB
-		// CHECK: do we need to check if a note w/ the same name exists in the DB already?
 		id, err := db.CreateNote(req.Username, req.NoteName)
 		if err != nil {
 			http.Error(w, "failed to create note in DB", http.StatusInternalServerError)

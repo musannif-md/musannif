@@ -149,6 +149,10 @@ func SignupUser(username, password, role string) error {
 
 func CreateNote(username, notename string) (int64, error) {
 	result, err := db.Exec(queries.InsertNoteQuery, username, notename)
+
+	// TODO if err type is because a note w/ the same name exists already,
+	// throw a different error
+
 	if err != nil {
 		return 0, fmt.Errorf("failed to create note: %w", err)
 	}
