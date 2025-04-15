@@ -13,5 +13,6 @@ build-linux-amd64: ENV = GOOS=linux GOARCH=amd64
 build-linux-amd64: build
 
 clean:
-	rm -rf bin || true
+	rm -rf bin/ notes/ || true
 	rm musannif.db || true
+	rm *.log || true
