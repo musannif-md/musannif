@@ -52,10 +52,14 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 			return
 		}
 
-		// Create file
 		req.NoteName += ".md"
 		path := path.Join(notesDirPath, req.NoteName)
-		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 644)
+
+		// Ensure file doesn't exist already
+
+		// Create file
+		// FIXME: why don't created files have 644?
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
 			http.Error(w, "failed to create note file", http.StatusInternalServerError)
 			logger.Log.Error().Err(err).Msg("failed to create note file")
@@ -100,6 +104,11 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 			return
 		}
 
+		if req.NoteName == "" || req.Username == "" {
+			http.Error(w, "Username/note name not provided", http.StatusBadRequest)
+			return
+		}
+
 		/*
 			CHECK: how could we ensure consistency b/w the filesystem and DB?
 
@@ -137,6 +146,7 @@ func FetchNoteData(cfg *config.AppConfig) http.HandlerFunc {
 			return
 		}
 
+		req.NoteName += ".md"
 		path := path.Join(cfg.App.NoteDirectory, req.Username, "/", req.NoteName)
 
 		content, err := os.ReadFile(path)
