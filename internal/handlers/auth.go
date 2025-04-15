@@ -21,7 +21,7 @@ type loginReq struct {
 // }
 
 type authResp struct {
-	Message string `json:"message"`
+	Message string `json:"message,omitempty"`
 	Role    string `json:"role,omitempty"`
 	Token   string `json:"token,omitempty"`
 }

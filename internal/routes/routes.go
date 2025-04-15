@@ -17,9 +17,9 @@ func AddRoutes(mux *http.ServeMux, cfg *config.AppConfig) {
 	mux.HandleFunc("POST /login", handlers.LoginHandler)
 	mux.HandleFunc("POST /signup", handlers.SignupHandler)
 
-	mux.HandleFunc("GET /note", auth(handlers.FetchNoteData(cfg))) // Get the contents of one note in the user's directory
-	mux.HandleFunc("POST /note", auth(handlers.CreateNote(cfg)))   // Upload a note to the user's directory
-	mux.HandleFunc("DELETE /note", auth(handlers.DeleteNote(cfg))) // Delete a note from the user's directory
+	mux.HandleFunc("POST /note", auth(handlers.CreateNote(cfg)))        // Upload a note to the user's directory
+	mux.HandleFunc("POST /get-note", auth(handlers.FetchNoteData(cfg))) // Get the contents of one note in the user's directory
+	mux.HandleFunc("POST /del-note", auth(handlers.DeleteNote(cfg)))    // Delete a note from the user's directory
 
-	mux.HandleFunc("GET /notes", auth(handlers.FetchNoteList(cfg))) // Return a list of notes in user's directory
+	mux.HandleFunc("POST /notes", auth(handlers.FetchNoteList(cfg))) // Return a list of notes in user's directory
 }

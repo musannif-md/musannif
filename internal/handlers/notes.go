@@ -94,7 +94,8 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req noteCreateReq
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -107,7 +108,7 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 		*/
 
 		// Delete database entry
-		err := db.DeleteNote(req.Username, req.NoteName)
+		err = db.DeleteNote(req.Username, req.NoteName)
 		if err != nil {
 			http.Error(w, "failed to delete note from DB", http.StatusInternalServerError)
 			logger.Log.Error().Err(err).Msg("failed to delete note from DB")
