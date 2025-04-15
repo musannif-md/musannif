@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -49,11 +50,43 @@ func initialize() error {
 
 func main() {
 	err := initialize()
-	ctx := context.Background()
-	err = run(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		log.Fatalf("error during init: %v\n", err)
+	}
+
+	userSignup := flag.Bool("signup", false, "Create user")
+	serve := flag.Bool("serve", false, "Start server")
+	username := flag.String("username", "", "Username for user")
+	password := flag.String("password", "", "Password for user")
+	flag.Parse()
+
+	if !*userSignup && !*serve {
+		fmt.Fprintln(os.Stderr, "No command specified. Use `--signup` or `-serve`")
 		os.Exit(1)
+	}
+
+	if *userSignup {
+		if *username == "" || *password == "" {
+			log.Fatal("username and password are required for signup")
+			os.Exit(1)
+		}
+
+		err := db.SignupUser(*username, *password, "user")
+		if err != nil {
+			log.Fatalf("error creating user: %v\n", err)
+			os.Exit(1)
+		}
+
+		return
+	}
+
+	if *serve {
+		ctx := context.Background()
+		err := run(ctx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
 
@@ -62,7 +95,8 @@ func run(ctx context.Context) error {
 	defer cancel()
 
 	defer func() {
-		if err := db.CleanupDb(); err != nil {
+		err := db.CleanupDb()
+		if err != nil {
 			logger.Log.Error().Err(err).Msg("Failed to cleanup database")
 		}
 	}()
@@ -76,7 +110,8 @@ func run(ctx context.Context) error {
 
 	go func() {
 		logger.Log.Printf("listening on %s\n", httpServer.Addr)
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		err := httpServer.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
 			logger.Log.Fatal().Err(err).Msg("Failed to start server")
 		}
 	}()
