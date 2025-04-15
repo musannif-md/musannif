@@ -56,7 +56,6 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 		path := path.Join(notesDirPath, req.NoteName)
 
 		// Create file
-		// FIXME: why don't created files have 644?
 		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
 			http.Error(w, "failed to create note file", http.StatusInternalServerError)
