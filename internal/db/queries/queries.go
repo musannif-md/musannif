@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS Users (
 CREATE INDEX IF NOT EXISTS idx_users_username ON Users (username);
 
 CREATE TABLE IF NOT EXISTS Notes (
-    note_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     created_at INTEGER DEFAULT (unixepoch()),
@@ -38,7 +38,7 @@ DELETE FROM Notes WHERE user_id = (SELECT id FROM Users WHERE username = ?) AND 
 `
 
 const GetUsersNotesMetadata = `
-SELECT n.note_id, n.name, n.created_at, n.last_modified from Notes n JOIN Users u on u.id = n.user_id
+SELECT n.id, n.name, n.created_at, n.last_modified from Notes n JOIN Users u on u.id = n.user_id
 `
 
 const UpdateNoteModificationTime = `
