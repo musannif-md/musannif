@@ -23,7 +23,7 @@ type noteCreationResp struct {
 }
 
 type noteContent struct {
-	NoteData string `json:"note_data"`
+	Content string `json:"content"`
 }
 
 type noteListReq struct {
@@ -53,8 +53,9 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		// Create file
+		req.NoteName += ".md"
 		path := path.Join(notesDirPath, req.NoteName)
-		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 666)
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 644)
 		if err != nil {
 			http.Error(w, "failed to create note file", http.StatusInternalServerError)
 			logger.Log.Error().Err(err).Msg("failed to create note file")
@@ -114,6 +115,7 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		// Delete file
+		req.NoteName += ".md"
 		path := path.Join(cfg.App.NoteDirectory, req.Username, "/", req.NoteName)
 		err = os.Remove(path)
 		if err != nil {
@@ -144,7 +146,7 @@ func FetchNoteData(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		data := noteContent{
-			NoteData: string(content),
+			Content: string(content),
 		}
 
 		w.Header().Set("Content-Type", "application/json")
