@@ -1,6 +1,7 @@
 name: basic build & test
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'cmd/**'
