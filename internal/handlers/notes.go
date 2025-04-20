@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/musannif-md/musannif/internal/config"
@@ -44,7 +44,7 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		// Make directories
-		notesDirPath := path.Join(cfg.App.NoteDirectory, req.Username, "/")
+		notesDirPath := filepath.Join(cfg.App.NoteDirectory, req.Username)
 		err = os.MkdirAll(notesDirPath, os.ModePerm)
 		if err != nil {
 			http.Error(w, "error initializing note directory: %v\n", http.StatusInternalServerError)
@@ -53,7 +53,7 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		req.NoteName += ".md"
-		path := path.Join(notesDirPath, req.NoteName)
+		path := filepath.Join(notesDirPath, req.NoteName)
 
 		// Create file
 		f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
@@ -122,7 +122,7 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 
 		// Delete file
 		req.NoteName += ".md"
-		path := path.Join(cfg.App.NoteDirectory, req.Username, "/", req.NoteName)
+		path := filepath.Join(cfg.App.NoteDirectory, req.Username, req.NoteName)
 		err = os.Remove(path)
 		if err != nil {
 			http.Error(w, "failed to delete note file", http.StatusInternalServerError)
@@ -143,7 +143,7 @@ func FetchNoteData(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		req.NoteName += ".md"
-		path := path.Join(cfg.App.NoteDirectory, req.Username, "/", req.NoteName)
+		path := filepath.Join(cfg.App.NoteDirectory, req.Username, req.NoteName)
 
 		content, err := os.ReadFile(path)
 		if err != nil {
