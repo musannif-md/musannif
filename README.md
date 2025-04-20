@@ -14,6 +14,13 @@ Server for Musannif, A sophisticated collaborative Markdown editor designed for 
 - If a central server is reaching computational limits, it informs a master server to spin up a new server to handle the load, and transmits data to it, as well as transferring clients to it
 - CHECK: Move database to a separate server that communicates with the master and/or worker servers
 
+## Usage
+
+```bash
+./musannif --signup -username <username> -password <password> # Optional
+./musannif -serve
+```
+
 ## Installing
 
 - 
