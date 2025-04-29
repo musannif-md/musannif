@@ -30,16 +30,17 @@ type noteListReq struct {
 	Username string `json:"username"`
 }
 
-type noteListResp struct {
-	Username string `json:"username"`
-}
-
 func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req noteCreateReq
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.NoteName == "" || req.Username == "" {
+			http.Error(w, "Username/note name not provided", http.StatusBadRequest)
 			return
 		}
 
@@ -113,6 +114,7 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 		*/
 
 		// Delete database entry
+		req.NoteName += ".md"
 		err = db.DeleteNote(req.Username, req.NoteName)
 		if err != nil {
 			http.Error(w, "failed to delete note from DB", http.StatusInternalServerError)
@@ -121,7 +123,6 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 		}
 
 		// Delete file
-		req.NoteName += ".md"
 		path := filepath.Join(cfg.App.NoteDirectory, req.Username, req.NoteName)
 		err = os.Remove(path)
 		if err != nil {
@@ -139,6 +140,11 @@ func FetchNoteData(cfg *config.AppConfig) http.HandlerFunc {
 		var req noteCreateReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.NoteName == "" || req.Username == "" {
+			http.Error(w, "Username/note name not provided", http.StatusBadRequest)
 			return
 		}
 
@@ -166,6 +172,11 @@ func FetchNoteList(cfg *config.AppConfig) http.HandlerFunc {
 		var req noteListReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.Username == "" {
+			http.Error(w, "Username not provided", http.StatusBadRequest)
 			return
 		}
 
