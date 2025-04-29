@@ -48,7 +48,7 @@ func CreateNote(cfg *config.AppConfig) http.HandlerFunc {
 		err = os.MkdirAll(notesDirPath, os.ModePerm)
 		if err != nil {
 			http.Error(w, "error initializing note directory: %v\n", http.StatusInternalServerError)
-			logger.Log.Error().Err(err).Msg("error initializing note directory: %v\n")
+			logger.Log.Error().Err(err).Msgf("error initializing note directory: %s", notesDirPath)
 			return
 		}
 
@@ -180,5 +180,3 @@ func FetchNoteList(cfg *config.AppConfig) http.HandlerFunc {
 		json.NewEncoder(w).Encode(noteListMd)
 	}
 }
-
-// CHECK: websocket w/ pubsub for multiple clients?
