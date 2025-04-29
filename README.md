@@ -39,9 +39,10 @@ make
 - [x] Init a basic logger - create wrapper over zerolog
 - [x] Mete out system architecture - how to approach horizontal scaling?
 - [x] CI/CD: Publish new 'release' whenever a tagged commit is pushed
+- [ ] Extract username from JWT as opposed to relying on JSON body
 - [ ] v1.0
   - [x] File/'Note' management on disk
-  - [ ] simple web-client for single user to create/edit their notes
+  - [x] simple web-client for single user to create/edit their notes
   - [ ] Single user note modification
 - [ ] v2.0
   - [ ] Real-time collaboration w/ multiple users
