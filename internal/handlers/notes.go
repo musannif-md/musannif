@@ -157,6 +157,8 @@ func FetchNoteData(cfg *config.AppConfig) http.HandlerFunc {
 			logger.Log.Error().Err(err).Msg("failed to read note")
 			return
 		}
+	
+		// TODO: base64 encode contents over first...
 
 		data := noteContent{
 			Content: string(content),
