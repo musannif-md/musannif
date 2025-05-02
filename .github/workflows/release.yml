@@ -11,6 +11,10 @@ permissions:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,16 +22,17 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.24.2'
+          go-version: '1.24.x'
 
       - name: Build binary
-        run: make build
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o bin/musannif-${{ matrix.goos }}-${{ matrix.goarch }} cmd/musannif/main.go
 
       - name: Upload release asset
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
-          file: ./bin/musannif
-          asset_name: musannif-linux-amd64
+          file: ./bin/musannif-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_name: musannif-${{ matrix.goos }}-${{ matrix.goarch }}
           overwrite: true
