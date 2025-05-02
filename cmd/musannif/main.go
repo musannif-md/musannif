@@ -20,8 +20,6 @@ import (
 	"github.com/musannif-md/musannif/internal/middlewares"
 	"github.com/musannif-md/musannif/internal/routes"
 	"github.com/musannif-md/musannif/internal/utils"
-
-	"github.com/MadAppGang/httplog"
 )
 
 func initialize() error {
@@ -144,7 +142,7 @@ func newServer(cfg *config.AppConfig) http.Handler {
 	var handler http.Handler = middlewares.CORS(mux)
 
 	if cfg.App.Environment == "debug" {
-		handler = httplog.Logger(handler)
+		handler = middlewares.ConditionalLogger(handler)
 	}
 
 	return handler
