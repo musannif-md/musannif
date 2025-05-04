@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/musannif-md/musannif/internal/config"
+	"github.com/musannif-md/musannif/internal/utils"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -18,8 +19,10 @@ const (
 )
 
 type sessionInfo struct {
-	solver  *DiffSolver
-	sockets []*websocket.Conn
+	host     *websocket.Conn
+	solver   *DiffSolver
+	sockets  []*websocket.Conn
+	channels []*chan error
 }
 
 type SessionInfoMap struct {
@@ -33,7 +36,13 @@ var (
 	}
 )
 
-func OnClientConnect(cfg *config.AppConfig, uuid uuid.UUID, ws *websocket.Conn, r *http.Request) error {
+func OnClientConnect(
+	cfg *config.AppConfig,
+	uuid uuid.UUID,
+	ws *websocket.Conn,
+	r *http.Request,
+	readerFinished chan error,
+) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -52,17 +61,21 @@ func OnClientConnect(cfg *config.AppConfig, uuid uuid.UUID, ws *websocket.Conn, 
 		path := filepath.Join(cfg.App.NoteDirectory, username, noteName)
 
 		si = sessionInfo{
-			sockets: make([]*websocket.Conn, 0, WS_ARR_START_CAP),
-			solver:  &DiffSolver{fpath: path},
+			sockets:  make([]*websocket.Conn, 0, WS_ARR_START_CAP),
+			channels: make([]*chan error, 0, WS_ARR_START_CAP),
+			solver:   &DiffSolver{fpath: path},
 		}
 
 		err := si.solver.initialize()
 		if err != nil {
 			return fmt.Errorf("failed to initialize diffSolver instance: %w", err)
 		}
+
+		si.host = ws
 	}
 
 	si.sockets = append(si.sockets, ws)
+	si.channels = append(si.channels, &readerFinished)
 	m.conns[uuid] = si
 
 	return nil
@@ -83,8 +96,6 @@ func OnClientWrite(uuid uuid.UUID, ws *websocket.Conn, msg string) error {
 	if err != nil {
 		return fmt.Errorf("diff resolution failed: %w", err)
 	}
-
-	// fmt.Println(msg)
 
 	for _, c := range si.sockets {
 		err := c.WriteMessage(websocket.TextMessage, []byte(msg))
@@ -110,10 +121,25 @@ func OnClientDisconnect(uuid uuid.UUID, ws *websocket.Conn) error {
 	for i, s := range si.sockets {
 		if s == ws {
 			si.sockets = slices.Delete(si.sockets, i, i+1)
+			si.channels = slices.Delete(si.channels, i, i+1)
 		}
 	}
 
 	m.conns[uuid] = si
+
+	if ws == si.host {
+		for i, s := range si.sockets {
+			closeErr := fmt.Errorf("session host disconnected")
+
+			err := utils.WriteCloseMsg(s, websocket.ClosePolicyViolation, closeErr)
+
+			if err != nil {
+				*si.channels[i] <- fmt.Errorf("failed to send close message: %w", err)
+			} else {
+				*si.channels[i] <- closeErr
+			}
+		}
+	}
 
 	if len(si.sockets) == 0 {
 		si.solver.cleanup()

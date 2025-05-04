@@ -8,19 +8,20 @@ import (
 	"github.com/musannif-md/musannif/internal/config"
 	"github.com/musannif-md/musannif/internal/logger"
 	"github.com/musannif-md/musannif/internal/resolver"
+	"github.com/musannif-md/musannif/internal/utils"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 const (
-	closeDeadline = 10 * time.Second
-	pongWait      = 20 * time.Second
-	pingPeriod    = pongWait * 9 / 10
+	pongWait   = 20 * time.Second
+	pingPeriod = pongWait * 9 / 10
 )
 
 var (
 	upgrader = websocket.Upgrader{
+		EnableCompression: true,
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
@@ -57,14 +58,10 @@ func CreateWsConn(cfg *config.AppConfig) http.HandlerFunc {
 		if err != nil {
 			logger.Log.Err(err).Msgf("session ID (uuid) error")
 
-			err := ws.WriteControl(
-				websocket.CloseMessage,
-				websocket.FormatCloseMessage(websocket.CloseUnsupportedData, "couldn't parse session ID (uuid)"),
-				time.Now().Add(closeDeadline),
-			)
+			err := utils.WriteCloseMsg(ws, websocket.CloseUnsupportedData, fmt.Errorf("missing/invalid session ID"))
 
 			if err != nil {
-				logger.Log.Err(err).Msgf("couldn't send close message to connection")
+				logger.Log.Err(err).Msgf(utils.UnableToSendCloseMsg)
 			}
 
 			return
@@ -72,27 +69,23 @@ func CreateWsConn(cfg *config.AppConfig) http.HandlerFunc {
 
 		err = wsTransmission(cfg, sidUUID, ws, r)
 		if err != nil {
-			logger.Log.Err(err).Msg("websocket died: ")
+			logger.Log.Err(err).Msg("websocket died")
 		}
 	}
 }
 
 func wsTransmission(cfg *config.AppConfig, sid uuid.UUID, ws *websocket.Conn, r *http.Request) error {
-	readerFinished := make(chan error)
+	stopReading := make(chan error)
 	pingTicker := time.NewTicker(pingPeriod)
-	err := resolver.OnClientConnect(cfg, sid, ws, r)
-	if err != nil {
-		err2 := ws.WriteControl(
-			websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseUnsupportedData, err.Error()),
-			time.Now().Add(closeDeadline),
-		)
+	connectErr := resolver.OnClientConnect(cfg, sid, ws, r, stopReading)
+	if connectErr != nil {
+		err := utils.WriteCloseMsg(ws, websocket.ClosePolicyViolation, connectErr)
 
-		if err2 != nil {
-			logger.Log.Err(err2).Msgf("couldn't send close message to connection")
+		if err != nil {
+			logger.Log.Err(err).Msgf(utils.UnableToSendCloseMsg)
 		}
 
-		return err
+		return connectErr
 	}
 
 	defer func() {
@@ -101,17 +94,17 @@ func wsTransmission(cfg *config.AppConfig, sid uuid.UUID, ws *websocket.Conn, r 
 		ws.Close()
 	}()
 
-	go readWs(sid, ws, readerFinished)
+	go readFromWs(sid, ws, stopReading)
 
 	for {
 		select {
-		case reason := <-readerFinished: // `readWs` loop has been broken
+		case reason := <-stopReading: // if someone signalled the end of reading or wants us to be closed
 			return reason
 		case <-pingTicker.C: // Send sporadic pings
 			err := ws.WriteControl(
 				websocket.PingMessage,
 				[]byte{},
-				time.Now().Add(closeDeadline),
+				time.Now().Add(utils.CloseDeadline),
 			)
 
 			if err != nil {
@@ -121,7 +114,7 @@ func wsTransmission(cfg *config.AppConfig, sid uuid.UUID, ws *websocket.Conn, r 
 	}
 }
 
-func readWs(sid uuid.UUID, ws *websocket.Conn, readerFinished chan error) {
+func readFromWs(sid uuid.UUID, ws *websocket.Conn, readerFinished chan error) {
 	defer close(readerFinished)
 
 	ws.SetReadDeadline(time.Now().Add(pongWait))
@@ -131,9 +124,10 @@ func readWs(sid uuid.UUID, ws *websocket.Conn, readerFinished chan error) {
 	})
 
 	for {
-		var msg map[string]any
+		var msgJson map[string]any
 
-		err := ws.ReadJSON(&msg)
+		// Blocks on read call. Closes return an error here.
+		err := ws.ReadJSON(&msgJson)
 		if err != nil {
 			if _, ok := err.(*websocket.CloseError); ok {
 				readerFinished <- nil
@@ -143,13 +137,24 @@ func readWs(sid uuid.UUID, ws *websocket.Conn, readerFinished chan error) {
 			break
 		}
 
-		textMsg, ok := msg["text"].(string)
+		// Parse recieved message
+		textStr, ok := msgJson["text"].(string)
 		if !ok {
-			readerFinished <- fmt.Errorf("json object didn't contain key 'text'")
+			closeErr := fmt.Errorf("json object didn't contain key 'text'")
+
+			err := utils.WriteCloseMsg(ws, websocket.CloseUnsupportedData, closeErr)
+
+			if err != nil {
+				readerFinished <- fmt.Errorf("failed to send close message: %w", err)
+			} else {
+				readerFinished <- closeErr
+			}
+
 			break
 		}
 
-		err = resolver.OnClientWrite(sid, ws, textMsg)
+		// Propagate message to diff resolver
+		err = resolver.OnClientWrite(sid, ws, textStr)
 		if err != nil {
 			readerFinished <- fmt.Errorf("resolver failed to write in session id [%s] w/ err: %w", sid.String(), err)
 			break

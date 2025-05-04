@@ -14,24 +14,24 @@ Server for Musannif, A sophisticated collaborative Markdown editor designed for 
 - If a central server is reaching computational limits, it informs a master server to spin up a new server to handle the load, and transmits data to it, as well as transferring clients to it
 - CHECK: Move database to a separate server that communicates with the master and/or worker servers
 
-## Usage
-
-```bash
-./musannif --signup -username <username> -password <password> # Optional
-./musannif -serve
-```
-
 ## Installing
 
-- 
+- The easiest way to install Musannif is to simply grab an automatically created release
 
-### Locally
+### Build locally
 
 ```bash
 git clone https://github.com/musannif-md/musannif.git
 cd musannif
 cp config_example.yaml config.yaml # and modify the new file accordingly
 make
+```
+
+## Usage
+
+```bash
+./musannif --signup -username <username> -password <password> # Optional
+./musannif -serve
 ```
 
 ## TODO
@@ -44,9 +44,10 @@ make
 - [x] Ping-pong
 - [x] Extract username from JWT as opposed to relying on JSON body
 - [ ] Diff algorithm
-    - [ ] single user note modification
+    - [ ] Single user note modification
     - [ ] Concurrency: real-time collaboration w/ multiple users
-- [ ] Disconnect others if the host disconnected
+- [ ] **Bug**: note name shouldn't contain extension whilst being stored/passed
+- [x] Disconnect other clients if the host disconnects
 - [ ] Note sharing via URL
 - [ ] User directory/Team management
 - [ ] Shift to Protobufs
