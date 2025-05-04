@@ -49,6 +49,7 @@ make
 - [ ] **Bug**: note name shouldn't contain extension whilst being stored/passed
 - [x] Disconnect other clients if the host disconnects
 - [ ] Note sharing via URL
+- [ ] Fix Dockerfile, add persistent storage + networking support (through Docker Compose?) & configure CI/CD for pushing image to DockerHub
 - [ ] User directory/Team management
 - [ ] Shift to Protobufs
 - [ ] 'Recently Deleted' note section
