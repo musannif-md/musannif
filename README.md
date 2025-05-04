@@ -39,15 +39,15 @@ make
 - [x] Init a basic logger - create wrapper over zerolog
 - [x] Mete out system architecture - how to approach horizontal scaling?
 - [x] CI/CD: Publish new 'release' whenever a tagged commit is pushed
+- [x] File/'Note' management on disk
+- [x] Core websocket architecture
+- [x] Ping-pong
 - [ ] Extract username from JWT as opposed to relying on JSON body
-- [ ] v1.0
-  - [x] File/'Note' management on disk
-  - [x] simple web-client for single user to create/edit their notes
-  - [ ] Single user note modification
-- [ ] v2.0
-  - [ ] Real-time collaboration w/ multiple users
-  - [ ] Note sharing via URL - let guests view notes
-- [ ] v3.0 User directory/Team management
+- [ ] Diff algorithm
+    - [ ] single user note modification
+    - [ ] Concurrency: real-time collaboration w/ multiple users
+- [ ] Note sharing via URL
+- [ ] User directory/Team management
 - [ ] Shift to Protobufs
 - [ ] 'Recently Deleted' note section
 - [ ] ???
