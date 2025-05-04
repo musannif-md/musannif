@@ -42,10 +42,11 @@ make
 - [x] File/'Note' management on disk
 - [x] Core websocket architecture
 - [x] Ping-pong
-- [ ] Extract username from JWT as opposed to relying on JSON body
+- [x] Extract username from JWT as opposed to relying on JSON body
 - [ ] Diff algorithm
     - [ ] single user note modification
     - [ ] Concurrency: real-time collaboration w/ multiple users
+- [ ] Disconnect others if the host disconnected
 - [ ] Note sharing via URL
 - [ ] User directory/Team management
 - [ ] Shift to Protobufs

@@ -2,8 +2,12 @@ package resolver
 
 import (
 	"fmt"
+	"net/http"
+	"path/filepath"
 	"slices"
 	"sync"
+
+	"github.com/musannif-md/musannif/internal/config"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -14,13 +18,13 @@ const (
 )
 
 type sessionInfo struct {
-	sockets []*websocket.Conn
 	solver  *DiffSolver
+	sockets []*websocket.Conn
 }
 
 type SessionInfoMap struct {
-	conns map[uuid.UUID]sessionInfo
 	mu    sync.Mutex
+	conns map[uuid.UUID]sessionInfo
 }
 
 var (
@@ -29,25 +33,33 @@ var (
 	}
 )
 
-func OnClientConnect(uuid uuid.UUID, ws *websocket.Conn) error {
+func OnClientConnect(cfg *config.AppConfig, uuid uuid.UUID, ws *websocket.Conn, r *http.Request) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	si, ok := m.conns[uuid]
+	si, sessionExists := m.conns[uuid]
 
-	if !ok {
+	// Session initiator must provide notename via query parameter!
+	if !sessionExists {
+		username := r.Context().Value("username").(string)
+		noteName := r.URL.Query().Get("note_name")
+		if noteName == "" {
+			return fmt.Errorf("expected note name from session initiator `/note_name`")
+		}
+
+		noteName += ".md"
+
+		path := filepath.Join(cfg.App.NoteDirectory, username, noteName)
+
 		si = sessionInfo{
 			sockets: make([]*websocket.Conn, 0, WS_ARR_START_CAP),
-			solver: &DiffSolver{
-				fpath: "notes/username/test-note-1.md", // TODO: extract username/note via JWT?
-			},
+			solver:  &DiffSolver{fpath: path},
 		}
 
 		err := si.solver.initialize()
 		if err != nil {
 			return fmt.Errorf("failed to initialize diffSolver instance: %w", err)
 		}
-
 	}
 
 	si.sockets = append(si.sockets, ws)

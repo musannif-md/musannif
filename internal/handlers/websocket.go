@@ -70,17 +70,30 @@ func CreateWsConn(cfg *config.AppConfig) http.HandlerFunc {
 			return
 		}
 
-		err = wsTransmission(sidUUID, ws)
+		err = wsTransmission(cfg, sidUUID, ws, r)
 		if err != nil {
 			logger.Log.Err(err).Msg("websocket died: ")
 		}
 	}
 }
 
-func wsTransmission(sid uuid.UUID, ws *websocket.Conn) error {
+func wsTransmission(cfg *config.AppConfig, sid uuid.UUID, ws *websocket.Conn, r *http.Request) error {
 	readerFinished := make(chan error)
 	pingTicker := time.NewTicker(pingPeriod)
-	resolver.OnClientConnect(sid, ws)
+	err := resolver.OnClientConnect(cfg, sid, ws, r)
+	if err != nil {
+		err2 := ws.WriteControl(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseUnsupportedData, err.Error()),
+			time.Now().Add(closeDeadline),
+		)
+
+		if err2 != nil {
+			logger.Log.Err(err2).Msgf("couldn't send close message to connection")
+		}
+
+		return err
+	}
 
 	defer func() {
 		resolver.OnClientDisconnect(sid, ws)
