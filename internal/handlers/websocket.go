@@ -89,7 +89,10 @@ func wsTransmission(cfg *config.AppConfig, sid uuid.UUID, ws *websocket.Conn, r 
 	}
 
 	defer func() {
-		resolver.OnClientDisconnect(sid, ws)
+		err := resolver.OnClientDisconnect(sid, ws)
+		if err != nil {
+			logger.Log.Err(err).Msgf("Error during disconnection")
+		}
 		pingTicker.Stop()
 		ws.Close()
 	}()

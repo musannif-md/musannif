@@ -20,7 +20,7 @@ const (
 
 type sessionInfo struct {
 	host     *websocket.Conn
-	solver   *DiffSolver
+	solver   *DiffResolver
 	sockets  []*websocket.Conn
 	channels []*chan error
 }
@@ -63,7 +63,7 @@ func OnClientConnect(
 		si = sessionInfo{
 			sockets:  make([]*websocket.Conn, 0, WS_ARR_START_CAP),
 			channels: make([]*chan error, 0, WS_ARR_START_CAP),
-			solver:   &DiffSolver{fpath: path},
+			solver:   &DiffResolver{fpath: path},
 		}
 
 		err := si.solver.initialize()
@@ -127,24 +127,24 @@ func OnClientDisconnect(uuid uuid.UUID, ws *websocket.Conn) error {
 
 	m.conns[uuid] = si
 
-	if ws == si.host {
-		for i, s := range si.sockets {
-			closeErr := fmt.Errorf("session host disconnected")
+	if ws != si.host {
+		return nil
+	}
 
-			err := utils.WriteCloseMsg(s, websocket.ClosePolicyViolation, closeErr)
+	// If we're here, the host DCed, so kick everyone from the session
 
-			if err != nil {
-				*si.channels[i] <- fmt.Errorf("failed to send close message: %w", err)
-			} else {
-				*si.channels[i] <- closeErr
-			}
+	for i, s := range si.sockets {
+		closeErr := fmt.Errorf("session host disconnected")
+
+		err := utils.WriteCloseMsg(s, websocket.ClosePolicyViolation, closeErr)
+
+		if err != nil {
+			*si.channels[i] <- fmt.Errorf("failed to send close message: %w", err)
+		} else {
+			*si.channels[i] <- closeErr
 		}
 	}
 
-	if len(si.sockets) == 0 {
-		si.solver.cleanup()
-		delete(m.conns, uuid)
-	}
-
-	return nil
+	delete(m.conns, uuid)
+	return si.solver.cleanup()
 }
