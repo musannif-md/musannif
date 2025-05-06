@@ -47,9 +47,39 @@ func (s *DiffResolver) cleanup() error {
 	return nil
 }
 
-func (s *DiffResolver) resolve() error {
+// applyAndGenerateDiff applies the given patches to the current text,
+// generates the diff between the original text and the patched text,
+// and returns the generated diff and any error.
+func (s *DiffResolver) applyAndGenerateDiff(patches []diffmatchpatch.Patch) ([]diffmatchpatch.Diff, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return nil
+	originalText := s.text // Store the original text for diffing
+
+	newText, results := s.dmp.PatchApply(patches, s.text)
+	allApplied := true
+	for _, applied := range results {
+		if !applied {
+			allApplied = false
+			break
+		}
+	}
+
+	if !allApplied {
+		return nil, fmt.Errorf("not all patches applied successfully")
+	}
+
+	s.text = newText
+	s.version++
+
+	diffs := s.dmp.DiffMain(originalText, s.text, false)
+	diffs = s.dmp.DiffCleanupSemantic(diffs)
+
+	return diffs, nil
+}
+
+func (s *DiffResolver) getText() (string, int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.text, s.version
 }

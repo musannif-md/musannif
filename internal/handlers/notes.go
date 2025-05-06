@@ -17,6 +17,10 @@ type noteCreateReq struct {
 	Content  string `json:"content"`
 }
 
+type noteFetchReq struct {
+	NoteName string `json:"note_name"`
+}
+
 type noteCreationResp struct {
 	NoteId string `json:"note_id"`
 }
@@ -136,7 +140,7 @@ func DeleteNote(cfg *config.AppConfig) http.HandlerFunc {
 
 func FetchNoteData(cfg *config.AppConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req noteCreateReq
+		var req noteFetchReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return

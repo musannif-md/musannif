@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 const (
@@ -35,6 +36,10 @@ var (
 		conns: make(map[uuid.UUID]sessionInfo),
 	}
 )
+
+type DiffMessage struct {
+	Patches []diffmatchpatch.Patch `json:"patches"`
+}
 
 func OnClientConnect(
 	cfg *config.AppConfig,
@@ -78,11 +83,22 @@ func OnClientConnect(
 	si.channels = append(si.channels, &readerFinished)
 	m.conns[uuid] = si
 
+	// Send the current text and version to the newly connected client.
+	text, version := si.solver.getText()
+	err := ws.WriteJSON(map[string]any{
+		"text":    text,
+		"version": version,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to send initial text: %w", err)
+	}
+	fmt.Println("sent text")
+
 	return nil
 }
 
 // Write to all clients sharing the same session
-func OnClientWrite(uuid uuid.UUID, ws *websocket.Conn, msg string) error {
+func OnClientWrite(uuid uuid.UUID, ws *websocket.Conn, diffMsg DiffMessage) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -91,17 +107,20 @@ func OnClientWrite(uuid uuid.UUID, ws *websocket.Conn, msg string) error {
 		return fmt.Errorf("connection doesn't exist in map")
 	}
 
-	// TODO: implement diffing
-	_, err := si.solver.resolve()
+	diffs, err := si.solver.applyAndGenerateDiff(diffMsg.Patches)
 	if err != nil {
-		return fmt.Errorf("diff resolution failed: %w", err)
+		return fmt.Errorf("failed to apply patches: %w", err)
+		// TODO: disconnect this client
 	}
 
 	for _, c := range si.sockets {
-		err := c.WriteMessage(websocket.TextMessage, []byte(msg))
-		if err != nil {
-			// TODO: log error if not of type 'client unreachable'
-			OnClientDisconnect(uuid, c)
+		if c != ws {
+			err := c.WriteJSON(map[string]any{
+				"diffs": diffs,
+			})
+			if err != nil {
+				OnClientDisconnect(uuid, c)
+			}
 		}
 	}
 

@@ -127,10 +127,10 @@ func readFromWs(sid uuid.UUID, ws *websocket.Conn, readerFinished chan error) {
 	})
 
 	for {
-		var msgJson map[string]any
+		var diffMsg resolver.DiffMessage
 
 		// Blocks on read call. Closes return an error here.
-		err := ws.ReadJSON(&msgJson)
+		err := ws.ReadJSON(&diffMsg)
 		if err != nil {
 			if _, ok := err.(*websocket.CloseError); ok {
 				readerFinished <- nil
@@ -140,24 +140,25 @@ func readFromWs(sid uuid.UUID, ws *websocket.Conn, readerFinished chan error) {
 			break
 		}
 
+		// TODO: validate syntax of DiffMessage object
 		// Parse recieved message
-		textStr, ok := msgJson["text"].(string)
-		if !ok {
-			closeErr := fmt.Errorf("json object didn't contain key 'text'")
-
-			err := utils.WriteCloseMsg(ws, websocket.CloseUnsupportedData, closeErr)
-
-			if err != nil {
-				readerFinished <- fmt.Errorf("failed to send close message: %w", err)
-			} else {
-				readerFinished <- closeErr
-			}
-
-			break
-		}
+		// textStr, ok := msgJson["text"].(string)
+		// if !ok {
+		// 	closeErr := fmt.Errorf("json object didn't contain key 'text'")
+		//
+		// 	err := utils.WriteCloseMsg(ws, websocket.CloseUnsupportedData, closeErr)
+		//
+		// 	if err != nil {
+		// 		readerFinished <- fmt.Errorf("failed to send close message: %w", err)
+		// 	} else {
+		// 		readerFinished <- closeErr
+		// 	}
+		//
+		// 	break
+		// }
 
 		// Propagate message to diff resolver
-		err = resolver.OnClientWrite(sid, ws, textStr)
+		err = resolver.OnClientWrite(sid, ws, diffMsg)
 		if err != nil {
 			readerFinished <- fmt.Errorf("resolver failed to write in session id [%s] w/ err: %w", sid.String(), err)
 			break
