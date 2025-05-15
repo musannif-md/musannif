@@ -1,5 +1,6 @@
 config.yaml
 *.log
 *.db
+*.DS_STORE
 bin/
 notes/

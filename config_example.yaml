@@ -1,15 +1,14 @@
 app:
   name: "musannif"
-  sqlite_directory: "./data"
-  log_directory: "./logs"
-  note_directory: "./notes"
+  sqlite_directory: "/var/db/musannif/"
+  log_directory: "/var/log/musannif/"
+  note_directory: "/var/opt/musannif/"
   environment: "debug"
 server:
   host: "localhost"
-  port: 8080
+  port: 8242
 secrets:
-  JWT_ACCESS_SECRET: "your-access-secret"
-  JWT_REFRESH_SECRET: "your-refresh-secret"
-
+  JWT_ACCESS_SECRET: ""
+  JWT_REFRESH_SECRET: ""
 rag:
   service_url: "http://localhost:8000"
