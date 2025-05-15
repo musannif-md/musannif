@@ -1,12 +1,12 @@
 import os
 from typing import List, Optional
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain.chains import RetrievalQA
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Load environment variables
 load_dotenv()
@@ -17,7 +17,7 @@ class RAGService:
             model_name=os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
         )
         self.llm = ChatGoogleGenerativeAI(
-            model=os.getenv("MODEL_NAME", "gemini-pro"),
+            model=os.getenv("MODEL_NAME", "gemini-1.5-flash"),
             google_api_key=os.getenv("GEMINI_API_KEY"),
             temperature=0.7
         )

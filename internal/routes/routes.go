@@ -26,6 +26,10 @@ func AddRoutes(mux *http.ServeMux, cfg *config.AppConfig) {
 	// User & note metadata
 	mux.HandleFunc("POST /notes", auth(handlers.FetchNoteList(cfg))) // Return a list of notes in user's directory
 
+	// RAG endpoints
+	mux.HandleFunc("POST /rag/query", auth(handlers.QueryRAGHandler(cfg))) // Query the RAG system
+	mux.HandleFunc("POST /rag/index", auth(handlers.IndexNoteHandler(cfg))) // Index a note in the RAG system
+
 	// Connection
 	mux.HandleFunc("/connect", auth(handlers.CreateWsConn(cfg))) // Establish connection and start sending/receiving diffs
 }

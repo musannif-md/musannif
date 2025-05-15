@@ -16,7 +16,7 @@ type AppConfig struct {
 		Name            string `mapstructure:"name"`
 		SqliteDirectory string `mapstructure:"sqlite_directory"`
 		LogDirectory    string `mapstructure:"log_directory"`
-		NoteDirectory    string `mapstructure:"note_directory"`
+		NoteDirectory   string `mapstructure:"note_directory"`
 		Environment     string `mapstructure:"environment"` // "debug" or "prod"
 	} `mapstructure:"app"`
 	Server struct {
@@ -27,6 +27,9 @@ type AppConfig struct {
 		JWT_ACCESS_SECRET  string `mapstructure:"JWT_ACCESS_SECRET"`
 		JWT_REFRESH_SECRET string `mapstructure:"JWT_ACCESS_SECRET"`
 	} `mapstructure:"secrets"`
+	RAG struct {
+		ServiceURL string `mapstructure:"service_url"`
+	} `mapstructure:"rag"`
 }
 
 func Initialize() error {
@@ -42,6 +45,7 @@ func Initialize() error {
 	}
 
 	viper.BindEnv("app.name", "APP_NAME")
+	viper.BindEnv("rag.service_url", "RAG_SERVICE_URL")
 
 	err = viper.Unmarshal(&Cfg)
 	if err != nil {
